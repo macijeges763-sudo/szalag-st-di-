@@ -516,6 +516,11 @@ footer strong{color:var(--brass);}
           <span class="panel-sub">kimenet</span>
         </div>
         <p class="hint" style="margin:0 0 4px;">A megadott stílus és hangszerek alapján összeáll az instrumentális alap.</p>
+        <div class="slider-row" style="margin-top:14px;">
+          <span class="s-label">A zene hossza</span>
+          <input type="range" min="15" max="240" step="5" value="30" id="song-length">
+          <span class="s-val" id="song-length-val">0:30</span>
+        </div>
         <div class="row" style="margin-top:12px;">
           <button class="btn solid" id="gen-btn">Zene generálása</button>
         </div>
@@ -523,7 +528,7 @@ footer strong{color:var(--brass);}
           <div class="waveform" id="base-waveform"></div>
           <div class="playbar">
             <button class="play-btn" id="base-play">▶</button>
-            <span class="timecode" id="base-time">0:00 / 1:30</span>
+            <span class="timecode" id="base-time">0:00 / 0:30</span>
             <span class="hint" style="margin:0;">próba lejátszás (szintetizált placeholder hang)</span>
           </div>
         </div>
@@ -868,43 +873,49 @@ const CHORDS = [
   [110.00,138.59,164.81],   // Am-ish
 ];
 
-// egy teljes, saját generált loop felépítése az aktuális beállítások alapján
-function buildLoopSchedule(c, dest, startTime, instruments, bpm){
+// egy teljes, saját generált szám felépítése az aktuális beállítások és a kért hossz alapján
+function buildLoopSchedule(c, dest, startTime, instruments, bpm, targetDuration){
   const beat = 60/bpm;
   const bar = beat*4;
-  const bars = 4;
+  const totalBars = Math.max(4, Math.round(targetDuration/bar));
   const timbre = instruments.has('szintetizátor') ? 'sawtooth'
                : instruments.has('vonósok') ? 'sine'
                : 'triangle';
 
-  for(let b=0;b<bars;b++){
+  for(let b=0;b<totalBars;b++){
     const barStart = startTime + b*bar;
     const chord = CHORDS[b%CHORDS.length];
+    const phrase = Math.floor(b/4);           // 4 ütemenkénti "frázis" a variációhoz
+    const isFill = (b % 8 === 7);              // minden 8. ütem egy kis fill/betét
+    const isBreak = (phrase % 3 === 2) && !isFill; // 3 frázisonként egy visszafogottabb rész
 
     if(instruments.has('zongora') || instruments.has('szintetizátor') || instruments.has('vonósok')){
       scheduleChord(c, dest, barStart, chord, bar*0.95, timbre);
     }
     if(instruments.has('basszus')){
       scheduleBassNote(c, dest, barStart, chord[0]/2, beat*1.9);
-      scheduleBassNote(c, dest, barStart+beat*2, chord[0]/2, beat*1.9);
+      if(!isBreak) scheduleBassNote(c, dest, barStart+beat*2, chord[0]/2, beat*1.9);
     }
     if(instruments.has('dob')){
       scheduleKick(c, dest, barStart);
-      scheduleKick(c, dest, barStart+beat*2);
+      if(!isBreak) scheduleKick(c, dest, barStart+beat*2);
       scheduleHat(c, dest, barStart+beat*0.5, false);
       scheduleHat(c, dest, barStart+beat*1.5, false);
-      scheduleHat(c, dest, barStart+beat*2.5, false);
-      scheduleHat(c, dest, barStart+beat*3.5, true);
+      if(!isBreak) scheduleHat(c, dest, barStart+beat*2.5, false);
+      scheduleHat(c, dest, barStart+beat*3.5, isFill);
     }
     if(instruments.has('taps / perkusszió')){
       scheduleClap(c, dest, barStart+beat*1);
-      scheduleClap(c, dest, barStart+beat*3);
+      if(!isBreak) scheduleClap(c, dest, barStart+beat*3);
+      if(isFill) scheduleClap(c, dest, barStart+beat*3.5);
     }
     if(instruments.has('trombita') || instruments.has('szaxofon')){
-      scheduleTrumpetSwell(c, dest, barStart+beat*0.2, barStart+beat*1.6, chord[1]*2);
+      if(phrase % 2 === 0 || isFill){
+        scheduleTrumpetSwell(c, dest, barStart+beat*0.2, barStart+beat*1.6, chord[1]*2);
+      }
     }
   }
-  return bars*bar; // a loop teljes hossza másodpercben
+  return totalBars*bar; // a generált szám teljes hossza másodpercben
 }
 
 // az idővonalon beállított egyedi jelölők (pl. taps 62 mp-nél) lejátszása,
@@ -923,13 +934,25 @@ function scheduleMarkersOntoLoop(c, dest, startTime, loopLen, markers, totalSeco
   });
 }
 
+// ---------- song length slider ----------
+const songLengthInput = document.getElementById('song-length');
+const songLengthVal = document.getElementById('song-length-val');
+function getSongLength(){ return parseInt(songLengthInput.value, 10); }
+songLengthInput.addEventListener('input', ()=>{
+  songLengthVal.textContent = fmt(getSongLength());
+  TOTAL_SECONDS = getSongLength();
+  renderTimeline();
+  activate('mod-gen');
+});
+songLengthVal.textContent = fmt(getSongLength());
+
 // ---------- 4. generate base track ----------
 document.getElementById('gen-btn').addEventListener('click', ()=>{
   document.getElementById('gen-result').style.display = 'block';
   const bars = buildWaveform(document.getElementById('base-waveform'), 42);
   const c = ctx();
   const bpm = STYLE_TEMPO[chosenStyle] || 96;
-  const loopLen = buildLoopSchedule(c, c.destination, c.currentTime+0.05, chosenInstr, bpm);
+  const loopLen = buildLoopSchedule(c, c.destination, c.currentTime+0.05, chosenInstr, bpm, getSongLength());
   document.getElementById('base-time').textContent = "0:00 / "+fmt(loopLen);
   animateWaveform(bars, loopLen);
   activate('mod-gen');
@@ -937,7 +960,7 @@ document.getElementById('gen-btn').addEventListener('click', ()=>{
 document.getElementById('base-play').addEventListener('click', (e)=>{
   const c = ctx();
   const bpm = STYLE_TEMPO[chosenStyle] || 96;
-  const loopLen = buildLoopSchedule(c, c.destination, c.currentTime+0.05, chosenInstr, bpm);
+  const loopLen = buildLoopSchedule(c, c.destination, c.currentTime+0.05, chosenInstr, bpm, getSongLength());
   const bars = document.querySelectorAll('#base-waveform .wf-bar');
   animateWaveform(Array.from(bars), loopLen);
   e.target.textContent = '❚❚';
@@ -994,7 +1017,7 @@ recBtn.addEventListener('click', async ()=>{
 });
 
 // ---------- 6. AI edit timeline ----------
-const TOTAL_SECONDS = 90;
+let TOTAL_SECONDS = 30; // a zene hossza mp-ben — a fenti slider frissíti
 const timeline = document.getElementById('timeline');
 let markers = [];
 
@@ -1184,7 +1207,7 @@ document.getElementById('final-play').addEventListener('click', (e)=>{
   const c = ctx();
   const bpm = STYLE_TEMPO[chosenStyle] || 96;
   const startTime = c.currentTime+0.05;
-  const loopLen = buildLoopSchedule(c, c.destination, startTime, chosenInstr, bpm);
+  const loopLen = buildLoopSchedule(c, c.destination, startTime, chosenInstr, bpm, getSongLength());
   scheduleMarkersOntoLoop(c, c.destination, startTime, loopLen, markers, TOTAL_SECONDS);
   if(recordedBuffer){
     playProcessedVocal(c, c.destination, recordedBuffer);
