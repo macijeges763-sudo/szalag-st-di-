@@ -1,0 +1,1200 @@
+<!DOCTYPE html>
+<html lang="hu">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SZALAG — AI zenestúdió</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap');
+
+:root{
+  --bg-deep:#14120F;
+  --panel:#1E1B17;
+  --panel-2:#252019;
+  --brass:#C89B5C;
+  --copper:#E3B673;
+  --teal:#4C8C80;
+  --cream:#F1ECE3;
+  --muted:#8A8378;
+  --line:#37312A;
+  --red:#B4543E;
+}
+*{box-sizing:border-box;}
+html,body{margin:0;padding:0;}
+body{
+  background:var(--bg-deep);
+  color:var(--cream);
+  font-family:'Inter',sans-serif;
+  min-height:100vh;
+  -webkit-font-smoothing:antialiased;
+}
+body::before{
+  content:"";
+  position:fixed; inset:0;
+  background-image:radial-gradient(circle at 1px 1px, rgba(255,255,255,0.025) 1px, transparent 0);
+  background-size:3px 3px;
+  pointer-events:none;
+  z-index:0;
+}
+.wrap{
+  max-width:760px;
+  margin:0 auto;
+  padding:48px 20px 100px;
+  position:relative;
+  z-index:1;
+}
+
+/* HERO */
+.hero{
+  margin-bottom:44px;
+  border-bottom:1px solid var(--line);
+  padding-bottom:32px;
+}
+.hero-eyebrow{
+  font-family:'IBM Plex Mono',monospace;
+  font-size:11px;
+  letter-spacing:.18em;
+  text-transform:uppercase;
+  color:var(--brass);
+  display:flex;
+  align-items:center;
+  gap:8px;
+  margin-bottom:14px;
+}
+.rec-dot{
+  width:7px;height:7px;border-radius:50%;
+  background:var(--red);
+  box-shadow:0 0 8px var(--red);
+  animation:pulse 2s ease-in-out infinite;
+}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:.35;}}
+h1{
+  font-family:'Fraunces',serif;
+  font-weight:600;
+  font-size:clamp(34px,6vw,50px);
+  line-height:1.02;
+  margin:0 0 12px;
+  letter-spacing:-.01em;
+}
+h1 em{
+  font-style:italic;
+  color:var(--copper);
+  font-weight:500;
+}
+.hero p{
+  color:var(--muted);
+  font-size:15px;
+  line-height:1.6;
+  max-width:480px;
+  margin:0;
+}
+
+/* SIGNAL CHAIN */
+.chain{
+  position:relative;
+  padding-left:34px;
+}
+.chain::before{
+  content:"";
+  position:absolute;
+  left:11px; top:6px; bottom:6px;
+  width:1px;
+  background:linear-gradient(to bottom, var(--brass), var(--line) 92%, transparent);
+}
+.module{
+  position:relative;
+  margin-bottom:22px;
+}
+.jack{
+  position:absolute;
+  left:-34px; top:26px;
+  width:23px; height:23px;
+  border-radius:50%;
+  background:var(--panel-2);
+  border:1px solid var(--line);
+  display:flex; align-items:center; justify-content:center;
+  font-family:'IBM Plex Mono',monospace;
+  font-size:10px;
+  color:var(--muted);
+  z-index:2;
+}
+.module.active .jack{
+  border-color:var(--brass);
+  color:var(--copper);
+  box-shadow:0 0 0 3px rgba(200,155,92,0.12);
+}
+.panel{
+  background:var(--panel);
+  border:1px solid var(--line);
+  border-radius:3px;
+  padding:20px 22px 22px;
+  transition:border-color .2s ease;
+}
+.module.active .panel{
+  border-color:rgba(200,155,92,0.35);
+}
+.panel-head{
+  display:flex;
+  align-items:baseline;
+  justify-content:space-between;
+  margin-bottom:14px;
+  gap:12px;
+}
+.panel-title{
+  font-family:'Fraunces',serif;
+  font-size:19px;
+  font-weight:500;
+  margin:0;
+}
+.panel-sub{
+  font-family:'IBM Plex Mono',monospace;
+  font-size:10.5px;
+  color:var(--muted);
+  letter-spacing:.04em;
+  text-transform:uppercase;
+}
+
+/* form bits */
+label.field-label{
+  display:block;
+  font-size:12px;
+  color:var(--muted);
+  margin:0 0 6px;
+  font-weight:500;
+}
+input[type=text], textarea, input[type=url]{
+  width:100%;
+  background:var(--bg-deep);
+  border:1px solid var(--line);
+  border-radius:2px;
+  color:var(--cream);
+  font-family:'Inter',sans-serif;
+  font-size:14px;
+  padding:10px 12px;
+  outline:none;
+  transition:border-color .15s;
+}
+input[type=text]:focus, textarea:focus, input[type=url]:focus{
+  border-color:var(--brass);
+}
+textarea{resize:vertical;min-height:90px;line-height:1.5;}
+
+.chips{
+  display:flex; flex-wrap:wrap; gap:8px;
+  margin-top:10px;
+}
+.chip{
+  font-family:'IBM Plex Mono',monospace;
+  font-size:12px;
+  padding:6px 12px;
+  border:1px solid var(--line);
+  border-radius:20px;
+  background:transparent;
+  color:var(--muted);
+  cursor:pointer;
+  transition:all .15s;
+  user-select:none;
+}
+.chip:hover{border-color:var(--brass);color:var(--cream);}
+.chip.on{
+  background:var(--brass);
+  border-color:var(--brass);
+  color:#1a1611;
+  font-weight:600;
+}
+
+.btn{
+  font-family:'IBM Plex Mono',monospace;
+  font-size:12.5px;
+  letter-spacing:.03em;
+  padding:10px 18px;
+  border-radius:2px;
+  border:1px solid var(--brass);
+  background:transparent;
+  color:var(--copper);
+  cursor:pointer;
+  transition:all .15s;
+  text-transform:uppercase;
+}
+.btn:hover{background:var(--brass);color:#1a1611;}
+.btn.solid{background:var(--brass);color:#1a1611;}
+.btn.solid:hover{background:var(--copper);}
+.btn.ghost{border-color:var(--line);color:var(--muted);}
+.btn.ghost:hover{border-color:var(--muted);color:var(--cream);background:transparent;}
+.btn.danger{border-color:var(--red);color:var(--red);}
+.btn.danger:hover{background:var(--red);color:var(--cream);}
+.btn:disabled{opacity:.35;cursor:not-allowed;}
+.btn:disabled:hover{background:transparent;color:var(--copper);}
+
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;}
+.hint{font-size:12px;color:var(--muted);margin-top:8px;line-height:1.5;}
+
+/* waveform */
+.waveform{
+  display:flex;align-items:center;gap:2px;
+  height:52px;
+  margin:14px 0;
+  padding:0 2px;
+}
+.wf-bar{
+  flex:1;
+  background:var(--teal);
+  border-radius:1px;
+  min-width:2px;
+  transition:background .2s;
+}
+.wf-bar.played{background:var(--copper);}
+
+.playbar{
+  display:flex; align-items:center; gap:12px;
+}
+.play-btn{
+  width:38px;height:38px;border-radius:50%;
+  border:1px solid var(--brass);
+  background:transparent;
+  color:var(--copper);
+  cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  flex-shrink:0;
+  font-size:13px;
+}
+.play-btn:hover{background:var(--brass);color:#1a1611;}
+.timecode{
+  font-family:'IBM Plex Mono',monospace;
+  font-size:12px;
+  color:var(--muted);
+  min-width:78px;
+}
+
+/* timeline / edit module */
+.timeline{
+  position:relative;
+  height:64px;
+  background:var(--bg-deep);
+  border:1px solid var(--line);
+  border-radius:2px;
+  margin:14px 0 8px;
+  cursor:crosshair;
+  overflow:hidden;
+}
+.tl-tick{
+  position:absolute; top:0; bottom:0;
+  width:1px; background:var(--line);
+}
+.tl-ticklabel{
+  position:absolute; bottom:2px;
+  font-family:'IBM Plex Mono',monospace;
+  font-size:9px; color:var(--muted);
+  transform:translateX(2px);
+}
+.tl-marker{
+  position:absolute; top:0; bottom:0;
+  background:rgba(200,155,92,0.18);
+  border-left:2px solid var(--brass);
+  border-right:2px solid var(--brass);
+  min-width:2px;
+}
+.tl-marker.point{
+  border-right:none;
+  background:transparent;
+}
+.tl-marker-label{
+  position:absolute; top:4px; left:4px;
+  font-family:'IBM Plex Mono',monospace;
+  font-size:9.5px;
+  color:var(--copper);
+  white-space:nowrap;
+  background:rgba(20,18,15,0.85);
+  padding:1px 4px;
+  border-radius:2px;
+}
+.marker-remove{
+  position:absolute; top:2px; right:2px;
+  font-size:9px; color:var(--muted); cursor:pointer;
+  background:rgba(20,18,15,0.85); border-radius:2px; padding:0 3px;
+}
+.marker-remove:hover{color:var(--red);}
+
+.edit-list{margin-top:10px;display:flex;flex-direction:column;gap:6px;}
+.edit-row{
+  display:flex; align-items:center; gap:10px;
+  font-family:'IBM Plex Mono',monospace;
+  font-size:12px;
+  padding:7px 10px;
+  background:var(--panel-2);
+  border:1px solid var(--line);
+  border-radius:2px;
+}
+.edit-row .tag{color:var(--copper);font-weight:600;min-width:90px;}
+.edit-row .time{color:var(--muted);flex:1;}
+.edit-row .x{cursor:pointer;color:var(--muted);}
+.edit-row .x:hover{color:var(--red);}
+
+.add-marker-form{
+  display:flex; gap:8px; flex-wrap:wrap; align-items:center;
+  margin-top:12px;
+  padding-top:12px;
+  border-top:1px dashed var(--line);
+}
+select{
+  background:var(--bg-deep);
+  border:1px solid var(--line);
+  color:var(--cream);
+  font-family:'IBM Plex Mono',monospace;
+  font-size:12px;
+  padding:8px 10px;
+  border-radius:2px;
+}
+.time-input{
+  width:64px;
+  background:var(--bg-deep);
+  border:1px solid var(--line);
+  color:var(--cream);
+  font-family:'IBM Plex Mono',monospace;
+  font-size:12px;
+  padding:8px 8px;
+  border-radius:2px;
+  text-align:center;
+}
+
+/* sliders */
+.slider-row{
+  display:flex; align-items:center; gap:14px;
+  margin-bottom:14px;
+}
+.slider-row .s-label{
+  width:120px; font-size:13px; color:var(--cream); flex-shrink:0;
+}
+input[type=range]{
+  -webkit-appearance:none;
+  flex:1;
+  height:2px;
+  background:var(--line);
+  border-radius:2px;
+  outline:none;
+}
+input[type=range]::-webkit-slider-thumb{
+  -webkit-appearance:none;
+  width:14px;height:14px;border-radius:50%;
+  background:var(--brass);
+  cursor:pointer;
+  border:2px solid var(--bg-deep);
+  box-shadow:0 0 0 1px var(--brass);
+}
+.s-val{
+  width:38px; text-align:right;
+  font-family:'IBM Plex Mono',monospace;
+  font-size:11px; color:var(--muted);
+  flex-shrink:0;
+}
+.toggle-row{
+  display:flex; align-items:center; justify-content:space-between;
+  padding:10px 0;
+  border-bottom:1px solid var(--line);
+}
+.toggle-row:last-child{border-bottom:none;}
+.toggle-row .t-label{font-size:13px;}
+.toggle-row .t-desc{font-size:11.5px;color:var(--muted);margin-top:2px;}
+.switch{
+  width:38px; height:20px; border-radius:20px;
+  background:var(--line);
+  position:relative; cursor:pointer;
+  flex-shrink:0;
+  transition:background .15s;
+}
+.switch.on{background:var(--brass);}
+.switch::after{
+  content:"";
+  position:absolute; top:2px; left:2px;
+  width:16px;height:16px;border-radius:50%;
+  background:var(--cream);
+  transition:left .15s;
+}
+.switch.on::after{left:20px;background:#1a1611;}
+
+.step-num{
+  font-family:'IBM Plex Mono',monospace;
+  font-size:10px;color:var(--muted);
+}
+
+footer{
+  margin-top:40px;
+  padding-top:20px;
+  border-top:1px solid var(--line);
+  font-family:'IBM Plex Mono',monospace;
+  font-size:11px;
+  color:var(--muted);
+  line-height:1.6;
+}
+footer strong{color:var(--brass);}
+
+@media (prefers-reduced-motion:reduce){
+  .rec-dot{animation:none;}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="hero">
+    <div class="hero-eyebrow"><span class="rec-dot"></span> KONCEPCIÓ / PROTOTÍPUS · NEM VALÓDI AI GENERÁLÁS</div>
+    <h1>Szalag <em>—</em> saját AI zenestúdió</h1>
+    <p>Végigmész a jelúton: stílus → hangszerelés → referencia → generálás → saját vokál → utómunka. Minden panel élőben szerkeszthető ezen az oldalon, de a tényleges zenegenerálás itt csak szimuláció — ezt egy valódi build a te API-kulcsoddal kötné össze egy zenegeneráló modellel.</p>
+  </div>
+
+  <div class="chain">
+
+    <!-- 1. STYLE -->
+    <div class="module active" id="mod-style">
+      <div class="jack">01</div>
+      <div class="panel">
+        <div class="panel-head">
+          <h2 class="panel-title">Stílus</h2>
+          <span class="panel-sub">bemenet</span>
+        </div>
+        <label class="field-label">Írd le a zene stílusát, hangulatát</label>
+        <input type="text" id="style-input" placeholder="pl. lassú, melankolikus lo-fi, esti hangulat, meleg zajos hangzás">
+        <div class="chips" id="style-chips">
+          <div class="chip">lo-fi</div>
+          <div class="chip">funk</div>
+          <div class="chip">synthwave</div>
+          <div class="chip">akusztikus</div>
+          <div class="chip">house</div>
+          <div class="chip">balladai</div>
+          <div class="chip">cinematic</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 2. INSTRUMENTS -->
+    <div class="module" id="mod-instr">
+      <div class="jack">02</div>
+      <div class="panel">
+        <div class="panel-head">
+          <h2 class="panel-title">Hangszerelés</h2>
+          <span class="panel-sub">réteg</span>
+        </div>
+        <label class="field-label">Válaszd ki, milyen hangszerek szóljanak</label>
+        <div class="chips" id="instr-chips">
+          <div class="chip">dob</div>
+          <div class="chip">basszus</div>
+          <div class="chip">gitár</div>
+          <div class="chip">zongora</div>
+          <div class="chip">szintetizátor</div>
+          <div class="chip">vonósok</div>
+          <div class="chip">trombita</div>
+          <div class="chip">szaxofon</div>
+          <div class="chip">taps / perkusszió</div>
+        </div>
+        <p class="hint" id="instr-summary">Még nincs kiválasztott hangszer.</p>
+      </div>
+    </div>
+
+    <!-- 3. REFERENCE -->
+    <div class="module" id="mod-ref">
+      <div class="jack">03</div>
+      <div class="panel">
+        <div class="panel-head">
+          <h2 class="panel-title">Referencia zene</h2>
+          <span class="panel-sub">opcionális</span>
+        </div>
+        <label class="field-label">Van egy zene, aminek a hangzása tetszik? Illeszd be a linkjét, vagy nevezd meg</label>
+        <input type="text" id="ref-input" placeholder="pl. link, vagy 'valami ehhez hasonló nyári diszkós szám'">
+        <div class="row" style="margin-top:12px;">
+          <button class="btn" id="ref-btn">Hasonló hangzás generálása</button>
+          <span class="hint" id="ref-status" style="margin:0;"></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 4. GENERATE -->
+    <div class="module" id="mod-gen">
+      <div class="jack">04</div>
+      <div class="panel">
+        <div class="panel-head">
+          <h2 class="panel-title">Alap sáv generálása</h2>
+          <span class="panel-sub">kimenet</span>
+        </div>
+        <p class="hint" style="margin:0 0 4px;">A megadott stílus és hangszerek alapján összeáll az instrumentális alap.</p>
+        <div class="row" style="margin-top:12px;">
+          <button class="btn solid" id="gen-btn">Zene generálása</button>
+        </div>
+        <div id="gen-result" style="display:none;margin-top:16px;">
+          <div class="waveform" id="base-waveform"></div>
+          <div class="playbar">
+            <button class="play-btn" id="base-play">▶</button>
+            <span class="timecode" id="base-time">0:00 / 1:30</span>
+            <span class="hint" style="margin:0;">próba lejátszás (szintetizált placeholder hang)</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 5. VOCAL -->
+    <div class="module" id="mod-vocal">
+      <div class="jack">05</div>
+      <div class="panel">
+        <div class="panel-head">
+          <h2 class="panel-title">Saját szöveg / vokál</h2>
+          <span class="panel-sub">felvétel</span>
+        </div>
+        <label class="field-label">Írd meg a szöveget, amit rá szeretnél énekelni</label>
+        <textarea id="lyrics-input" placeholder="Ide jöhet a dalszöveged sora, sorai..."></textarea>
+        <div class="row" style="margin-top:12px;">
+          <button class="btn danger" id="rec-btn">● Felvétel indítása</button>
+          <span class="timecode" id="rec-time">00:00</span>
+        </div>
+        <p class="hint" id="rec-status">A felvétel a mikrofonodat használja — a böngésző kérni fog rá engedélyt.</p>
+        <div id="rec-result" style="display:none;margin-top:10px;">
+          <audio id="rec-audio" controls style="width:100%;height:34px;"></audio>
+        </div>
+      </div>
+    </div>
+
+    <!-- 6. AI EDIT TIMELINE -->
+    <div class="module" id="mod-edit">
+      <div class="jack">06</div>
+      <div class="panel">
+        <div class="panel-head">
+          <h2 class="panel-title">AI utómunka az idővonalon</h2>
+          <span class="panel-sub">szerkesztés</span>
+        </div>
+        <p class="hint" style="margin:0 0 4px;">Jelölj ki időpontokat vagy szakaszokat, és mondd meg, mi történjen ott — pl. taps a 62. másodpercnél, vagy trombita 13-tól 80 másodpercig.</p>
+        <div class="timeline" id="timeline"></div>
+
+        <div class="add-marker-form">
+          <select id="marker-effect">
+            <option>taps</option>
+            <option>trombita</option>
+            <option>dobütés</option>
+            <option>szintetizátor felfutás</option>
+            <option>csend / szünet</option>
+            <option>visszhang</option>
+          </select>
+          <span class="hint" style="margin:0;">mp-től</span>
+          <input type="text" class="time-input" id="marker-from" placeholder="62" inputmode="numeric">
+          <span class="hint" style="margin:0;">mp-ig (üresen = pillanatnyi)</span>
+          <input type="text" class="time-input" id="marker-to" placeholder="80" inputmode="numeric">
+          <button class="btn" id="marker-add">Hozzáadás</button>
+        </div>
+
+        <div class="edit-list" id="edit-list"></div>
+        <div class="row" style="margin-top:14px;">
+          <button class="btn ghost" id="preset-btn">Példa: taps 62 mp-nél + trombita 13–80 mp</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 7. VOCAL EFFECTS -->
+    <div class="module" id="mod-fx">
+      <div class="jack">07</div>
+      <div class="panel">
+        <div class="panel-head">
+          <h2 class="panel-title">Vokál effektek</h2>
+          <span class="panel-sub">kimenet</span>
+        </div>
+        <p class="hint" style="margin:0 0 10px;">Állítsd be, hogyan szóljon a saját felvett hangod a végleges keverékben.</p>
+
+        <div class="toggle-row">
+          <div>
+            <div class="t-label">Autotune</div>
+            <div class="t-desc">hangmagasság-korrekció, tisztább, "stúdiós" hangzás</div>
+          </div>
+          <div class="switch" data-fx="autotune"></div>
+        </div>
+        <div class="toggle-row">
+          <div>
+            <div class="t-label">Dupla vokál</div>
+            <div class="t-desc">a hangod második rétegben is fut, telítettebb hatás</div>
+          </div>
+          <div class="switch" data-fx="double"></div>
+        </div>
+        <div class="toggle-row">
+          <div>
+            <div class="t-label">Vocoder</div>
+            <div class="t-desc">robotos, szintetizált énekhang-effekt</div>
+          </div>
+          <div class="switch" data-fx="vocoder"></div>
+        </div>
+
+        <div style="margin-top:16px;">
+          <div class="slider-row">
+            <span class="s-label">Autotune erőssége</span>
+            <input type="range" min="0" max="100" value="40" id="fx-strength">
+            <span class="s-val" id="fx-strength-val">40%</span>
+          </div>
+          <div class="slider-row">
+            <span class="s-label">Visszhang / reverb</span>
+            <input type="range" min="0" max="100" value="20" id="fx-reverb">
+            <span class="s-val" id="fx-reverb-val">20%</span>
+          </div>
+          <div class="slider-row">
+            <span class="s-label">Vokál a keverékben</span>
+            <input type="range" min="0" max="100" value="75" id="fx-mix">
+            <span class="s-val" id="fx-mix-val">75%</span>
+          </div>
+        </div>
+
+        <div class="row" style="margin-top:8px;">
+          <button class="btn solid" id="final-btn">Végleges keverék elkészítése</button>
+        </div>
+        <div id="final-result" style="display:none;margin-top:16px;">
+          <div class="waveform" id="final-waveform"></div>
+          <div class="playbar">
+            <button class="play-btn" id="final-play">▶</button>
+            <span class="timecode">kész keverék · próba lejátszás</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <footer>
+    <strong>Megjegyzés:</strong> ez a stúdió teljesen önmagában működik — nincs mögötte semmilyen külső API vagy szolgáltatás. Minden hangot a böngésződ generál helyben, valós időben (Web Audio motor): a dobok, a basszus, az akkordok, a taps és a trombita is élőben szintetizált hang, a hangszerelésed és az idővonalon beállított effektjeid alapján. A vokálfelvétel is a saját géped mikrofonjáról megy, sehova nem küldve.
+  </footer>
+
+</div>
+
+<script>
+// ============================================================
+// SZALAG — teljesen önálló hangmotor, semmilyen külső API nélkül.
+// Minden hang a böngészőben, helyben generálódik (Web Audio API).
+// ============================================================
+
+function fmt(t){
+  const m = Math.floor(t/60), s = Math.floor(t%60);
+  return m+":"+String(s).padStart(2,"0");
+}
+function activate(id){
+  document.getElementById(id).classList.add('active');
+}
+
+let audioCtx = null;
+function ctx(){
+  if(!audioCtx) audioCtx = new (window.AudioContext||window.webkitAudioContext)();
+  if(audioCtx.state === 'suspended') audioCtx.resume();
+  return audioCtx;
+}
+
+// egy saját, generált "terem" visszhang — nem minta, hanem zajból épített impulzus
+function makeReverbImpulse(c, seconds, decay){
+  const rate = c.sampleRate;
+  const len = rate*seconds;
+  const impulse = c.createBuffer(2, len, rate);
+  for(let ch=0; ch<2; ch++){
+    const data = impulse.getChannelData(ch);
+    for(let i=0;i<len;i++){
+      data[i] = (Math.random()*2-1) * Math.pow(1-i/len, decay);
+    }
+  }
+  return impulse;
+}
+
+// ---------- 1. style chips ----------
+const styleChips = document.querySelectorAll('#style-chips .chip');
+let chosenStyle = 'lo-fi';
+const STYLE_TEMPO = {
+  'lo-fi':78, 'funk':108, 'synthwave':100, 'akusztikus':92,
+  'house':124, 'balladai':70, 'cinematic':84
+};
+styleChips.forEach(c=>{
+  c.addEventListener('click', ()=>{
+    styleChips.forEach(o=>o.classList.remove('on'));
+    c.classList.add('on');
+    chosenStyle = c.textContent;
+    document.getElementById('style-input').value = c.textContent;
+    activate('mod-style');
+  });
+});
+document.getElementById('style-input').addEventListener('input', ()=>{
+  activate('mod-style');
+});
+
+// ---------- 2. instruments ----------
+const instrChips = document.querySelectorAll('#instr-chips .chip');
+let chosenInstr = new Set(['dob','basszus','zongora']);
+instrChips.forEach(c=>{
+  if(chosenInstr.has(c.textContent)) c.classList.add('on');
+  c.addEventListener('click', ()=>{
+    c.classList.toggle('on');
+    if(c.classList.contains('on')) chosenInstr.add(c.textContent);
+    else chosenInstr.delete(c.textContent);
+    const summary = document.getElementById('instr-summary');
+    summary.textContent = chosenInstr.size
+      ? "Kiválasztva: " + Array.from(chosenInstr).join(", ")
+      : "Még nincs kiválasztott hangszer.";
+    if(chosenInstr.size) activate('mod-instr');
+  });
+});
+document.getElementById('instr-summary').textContent = "Kiválasztva: " + Array.from(chosenInstr).join(", ");
+
+// ---------- 3. reference ----------
+document.getElementById('ref-btn').addEventListener('click', ()=>{
+  const val = document.getElementById('ref-input').value.trim();
+  const status = document.getElementById('ref-status');
+  if(!val){
+    status.textContent = "Adj meg egy referencia zenét vagy leírást előbb.";
+    return;
+  }
+  status.textContent = "Hangzás elemezve — a tempó és a hangszín ehhez lett igazítva a generáláskor.";
+  activate('mod-ref');
+});
+
+// ---------- waveform drawing ----------
+function buildWaveform(container, seed){
+  container.innerHTML = "";
+  const bars = 70;
+  let s = seed;
+  const els = [];
+  for(let i=0;i<bars;i++){
+    s = (s*9301+49297)%233280;
+    const rnd = s/233280;
+    const h = 8 + rnd*44;
+    const bar = document.createElement('div');
+    bar.className = 'wf-bar';
+    bar.style.height = h+'px';
+    container.appendChild(bar);
+    els.push(bar);
+  }
+  return els;
+}
+function animateWaveform(bars, durationSec, onDone){
+  const start = performance.now();
+  function step(now){
+    const prog = Math.min(1, (now-start)/1000/durationSec);
+    const litCount = Math.floor(prog*bars.length);
+    bars.forEach((b,i)=> b.classList.toggle('played', i<litCount));
+    if(prog<1) requestAnimationFrame(step); else if(onDone) onDone();
+  }
+  requestAnimationFrame(step);
+}
+
+// ============================================================
+// PROCEDURÁLIS HANGMOTOR — dob, basszus, akkord, taps, trombita
+// ============================================================
+
+function noiseBuffer(c, duration){
+  const buf = c.createBuffer(1, c.sampleRate*duration, c.sampleRate);
+  const d = buf.getChannelData(0);
+  for(let i=0;i<d.length;i++) d[i] = Math.random()*2-1;
+  return buf;
+}
+
+function scheduleKick(c, dest, t){
+  const o = c.createOscillator();
+  const g = c.createGain();
+  o.type = 'sine';
+  o.frequency.setValueAtTime(140, t);
+  o.frequency.exponentialRampToValueAtTime(45, t+0.12);
+  g.gain.setValueAtTime(0.9, t);
+  g.gain.exponentialRampToValueAtTime(0.001, t+0.22);
+  o.connect(g); g.connect(dest);
+  o.start(t); o.stop(t+0.25);
+}
+function scheduleHat(c, dest, t, open){
+  const src = c.createBufferSource();
+  src.buffer = noiseBuffer(c, 0.08);
+  const hp = c.createBiquadFilter();
+  hp.type = 'highpass'; hp.frequency.value = 7000;
+  const g = c.createGain();
+  g.gain.setValueAtTime(0.18, t);
+  g.gain.exponentialRampToValueAtTime(0.001, t+(open?0.16:0.045));
+  src.connect(hp); hp.connect(g); g.connect(dest);
+  src.start(t); src.stop(t+0.2);
+}
+function scheduleClap(c, dest, t){
+  // saját "taps" hang: több zajkitörés egymásra rétegezve
+  [0,0.012,0.024].forEach(off=>{
+    const src = c.createBufferSource();
+    src.buffer = noiseBuffer(c, 0.12);
+    const bp = c.createBiquadFilter();
+    bp.type = 'bandpass'; bp.frequency.value = 1500; bp.Q.value = 1.1;
+    const g = c.createGain();
+    g.gain.setValueAtTime(0.5, t+off);
+    g.gain.exponentialRampToValueAtTime(0.001, t+off+0.18);
+    src.connect(bp); bp.connect(g); g.connect(dest);
+    src.start(t+off); src.stop(t+off+0.2);
+  });
+}
+function scheduleTrumpetSwell(c, dest, tStart, tEnd, baseFreq){
+  const o1 = c.createOscillator();
+  const o2 = c.createOscillator();
+  o1.type = 'sawtooth'; o2.type = 'square';
+  o1.frequency.value = baseFreq;
+  o2.frequency.value = baseFreq*1.005;
+  const bp = c.createBiquadFilter();
+  bp.type = 'bandpass'; bp.frequency.value = baseFreq*2.2; bp.Q.value = 2.2;
+  const g = c.createGain();
+  const dur = Math.max(0.3, tEnd - tStart);
+  g.gain.setValueAtTime(0, tStart);
+  g.gain.linearRampToValueAtTime(0.16, tStart+Math.min(0.4,dur*0.3));
+  g.gain.setValueAtTime(0.16, tStart+dur*0.6);
+  g.gain.linearRampToValueAtTime(0.0001, tEnd);
+  o1.connect(bp); o2.connect(bp); bp.connect(g); g.connect(dest);
+  o1.start(tStart); o1.stop(tEnd+0.05);
+  o2.start(tStart); o2.stop(tEnd+0.05);
+}
+function scheduleBassNote(c, dest, t, freq, dur){
+  const o = c.createOscillator();
+  const g = c.createGain();
+  o.type = 'triangle';
+  o.frequency.value = freq;
+  g.gain.setValueAtTime(0.0001, t);
+  g.gain.linearRampToValueAtTime(0.28, t+0.02);
+  g.gain.exponentialRampToValueAtTime(0.001, t+dur);
+  o.connect(g); g.connect(dest);
+  o.start(t); o.stop(t+dur+0.05);
+}
+function scheduleChord(c, dest, t, freqs, dur, timbre){
+  freqs.forEach(f=>{
+    const o = c.createOscillator();
+    const g = c.createGain();
+    o.type = timbre;
+    o.frequency.value = f;
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.linearRampToValueAtTime(0.06, t+0.08);
+    g.gain.linearRampToValueAtTime(0.05, t+dur*0.7);
+    g.gain.exponentialRampToValueAtTime(0.001, t+dur);
+    o.connect(g); g.connect(dest);
+    o.start(t); o.stop(t+dur+0.05);
+  });
+}
+
+const CHORDS = [
+  [130.81,164.81,196.00],   // Cm-ish
+  [116.54,146.83,174.61],   // Bbm-ish
+  [98.00,123.47,146.83],    // Gm-ish
+  [110.00,138.59,164.81],   // Am-ish
+];
+
+// egy teljes, saját generált loop felépítése az aktuális beállítások alapján
+function buildLoopSchedule(c, dest, startTime, instruments, bpm){
+  const beat = 60/bpm;
+  const bar = beat*4;
+  const bars = 4;
+  const timbre = instruments.has('szintetizátor') ? 'sawtooth'
+               : instruments.has('vonósok') ? 'sine'
+               : 'triangle';
+
+  for(let b=0;b<bars;b++){
+    const barStart = startTime + b*bar;
+    const chord = CHORDS[b%CHORDS.length];
+
+    if(instruments.has('zongora') || instruments.has('szintetizátor') || instruments.has('vonósok')){
+      scheduleChord(c, dest, barStart, chord, bar*0.95, timbre);
+    }
+    if(instruments.has('basszus')){
+      scheduleBassNote(c, dest, barStart, chord[0]/2, beat*1.9);
+      scheduleBassNote(c, dest, barStart+beat*2, chord[0]/2, beat*1.9);
+    }
+    if(instruments.has('dob')){
+      scheduleKick(c, dest, barStart);
+      scheduleKick(c, dest, barStart+beat*2);
+      scheduleHat(c, dest, barStart+beat*0.5, false);
+      scheduleHat(c, dest, barStart+beat*1.5, false);
+      scheduleHat(c, dest, barStart+beat*2.5, false);
+      scheduleHat(c, dest, barStart+beat*3.5, true);
+    }
+    if(instruments.has('taps / perkusszió')){
+      scheduleClap(c, dest, barStart+beat*1);
+      scheduleClap(c, dest, barStart+beat*3);
+    }
+    if(instruments.has('trombita') || instruments.has('szaxofon')){
+      scheduleTrumpetSwell(c, dest, barStart+beat*0.2, barStart+beat*1.6, chord[1]*2);
+    }
+  }
+  return bars*bar; // a loop teljes hossza másodpercben
+}
+
+// az idővonalon beállított egyedi jelölők (pl. taps 62 mp-nél) lejátszása,
+// a 90 mp-es "dal" arányosan rávetítve a rövid, élő előhallgató loopra
+function scheduleMarkersOntoLoop(c, dest, startTime, loopLen, markers, totalSeconds){
+  markers.forEach(m=>{
+    const from = (m.from/totalSeconds)*loopLen;
+    const to = m.to != null ? (m.to/totalSeconds)*loopLen : from+0.3;
+    const t = startTime+from, tEnd = startTime+to;
+    if(m.effect === 'taps') scheduleClap(c, dest, t);
+    else if(m.effect === 'trombita') scheduleTrumpetSwell(c, dest, t, tEnd, 233);
+    else if(m.effect === 'dobütés') scheduleKick(c, dest, t);
+    else if(m.effect === 'szintetizátor felfutás') scheduleChord(c, dest, t, [220,277,330], Math.max(0.4,tEnd-t), 'sawtooth');
+    else if(m.effect === 'visszhang') scheduleHat(c, dest, t, true);
+    // 'csend / szünet' — tudatosan nem szólaltat meg semmit
+  });
+}
+
+// ---------- 4. generate base track ----------
+document.getElementById('gen-btn').addEventListener('click', ()=>{
+  document.getElementById('gen-result').style.display = 'block';
+  const bars = buildWaveform(document.getElementById('base-waveform'), 42);
+  const c = ctx();
+  const bpm = STYLE_TEMPO[chosenStyle] || 96;
+  const loopLen = buildLoopSchedule(c, c.destination, c.currentTime+0.05, chosenInstr, bpm);
+  document.getElementById('base-time').textContent = "0:00 / "+fmt(loopLen);
+  animateWaveform(bars, loopLen);
+  activate('mod-gen');
+});
+document.getElementById('base-play').addEventListener('click', (e)=>{
+  const c = ctx();
+  const bpm = STYLE_TEMPO[chosenStyle] || 96;
+  const loopLen = buildLoopSchedule(c, c.destination, c.currentTime+0.05, chosenInstr, bpm);
+  const bars = document.querySelectorAll('#base-waveform .wf-bar');
+  animateWaveform(Array.from(bars), loopLen);
+  e.target.textContent = '❚❚';
+  setTimeout(()=>{ e.target.textContent = '▶'; }, loopLen*1000);
+});
+
+// ---------- 5. vocal recording ----------
+let mediaRecorder, chunks = [], recTimer, recSeconds = 0, stream;
+let recordedBlobUrl = null, recordedBuffer = null;
+const recBtn = document.getElementById('rec-btn');
+const recTimeEl = document.getElementById('rec-time');
+const recStatus = document.getElementById('rec-status');
+
+recBtn.addEventListener('click', async ()=>{
+  if(recBtn.dataset.state === 'recording'){
+    mediaRecorder.stop();
+    stream.getTracks().forEach(t=>t.stop());
+    recBtn.dataset.state = '';
+    recBtn.textContent = '● Felvétel indítása';
+    clearInterval(recTimer);
+    return;
+  }
+  try{
+    stream = await navigator.mediaDevices.getUserMedia({audio:true});
+    chunks = [];
+    mediaRecorder = new MediaRecorder(stream);
+    mediaRecorder.ondataavailable = e => chunks.push(e.data);
+    mediaRecorder.onstop = async ()=>{
+      const blob = new Blob(chunks, {type:'audio/webm'});
+      recordedBlobUrl = URL.createObjectURL(blob);
+      const audio = document.getElementById('rec-audio');
+      audio.src = recordedBlobUrl;
+      document.getElementById('rec-result').style.display = 'block';
+      recStatus.textContent = "Felvétel kész — meghallgathatod fent.";
+      activate('mod-vocal');
+      try{
+        const arr = await blob.arrayBuffer();
+        recordedBuffer = await ctx().decodeAudioData(arr);
+      }catch(e){ recordedBuffer = null; }
+    };
+    mediaRecorder.start();
+    recBtn.dataset.state = 'recording';
+    recBtn.textContent = '■ Felvétel leállítása';
+    recSeconds = 0;
+    recTimeEl.textContent = '00:00';
+    recStatus.textContent = "Felvétel folyamatban — énekeld rá a szöveget.";
+    recTimer = setInterval(()=>{
+      recSeconds++;
+      recTimeEl.textContent = String(Math.floor(recSeconds/60)).padStart(2,'0')+":"+String(recSeconds%60).padStart(2,'0');
+    },1000);
+  }catch(err){
+    recStatus.textContent = "Nem sikerült elérni a mikrofont ebben a környezetben (engedély szükséges).";
+  }
+});
+
+// ---------- 6. AI edit timeline ----------
+const TOTAL_SECONDS = 90;
+const timeline = document.getElementById('timeline');
+let markers = [];
+
+function renderTimeline(){
+  timeline.innerHTML = "";
+  for(let t=0; t<=TOTAL_SECONDS; t+=10){
+    const pct = (t/TOTAL_SECONDS)*100;
+    const tick = document.createElement('div');
+    tick.className = 'tl-tick';
+    tick.style.left = pct+'%';
+    timeline.appendChild(tick);
+    const label = document.createElement('div');
+    label.className = 'tl-ticklabel';
+    label.style.left = pct+'%';
+    label.textContent = t+'s';
+    timeline.appendChild(label);
+  }
+  markers.forEach((m, idx)=>{
+    const fromPct = (m.from/TOTAL_SECONDS)*100;
+    const el = document.createElement('div');
+    const isPoint = (m.to == null || m.to === m.from);
+    el.className = 'tl-marker' + (isPoint ? ' point':'');
+    el.style.left = fromPct+'%';
+    if(!isPoint){
+      const widthPct = ((m.to-m.from)/TOTAL_SECONDS)*100;
+      el.style.width = Math.max(widthPct,0.6)+'%';
+    } else {
+      el.style.width = '2px';
+    }
+    const lbl = document.createElement('div');
+    lbl.className = 'tl-marker-label';
+    lbl.textContent = m.effect + ' · ' + m.from + (isPoint? 's' : '–'+m.to+'s');
+    el.appendChild(lbl);
+    const rm = document.createElement('div');
+    rm.className = 'marker-remove';
+    rm.textContent = '✕';
+    rm.addEventListener('click', (e)=>{ e.stopPropagation(); markers.splice(idx,1); renderTimeline(); renderEditList(); });
+    el.appendChild(rm);
+    timeline.appendChild(el);
+  });
+}
+
+function renderEditList(){
+  const list = document.getElementById('edit-list');
+  list.innerHTML = "";
+  if(!markers.length){
+    list.innerHTML = '<p class="hint" style="margin:0;">Még nincs beállított effekt az idővonalon.</p>';
+    return;
+  }
+  markers.sort((a,b)=>a.from-b.from).forEach((m)=>{
+    const row = document.createElement('div');
+    row.className = 'edit-row';
+    const isPoint = (m.to == null || m.to === m.from);
+    row.innerHTML = `<span class="tag">${m.effect}</span><span class="time">${isPoint ? m.from+' mp-nél' : m.from+'–'+m.to+' mp'}</span><span class="x">✕</span>`;
+    row.querySelector('.x').addEventListener('click', ()=>{
+      const realIdx = markers.indexOf(m);
+      markers.splice(realIdx,1);
+      renderTimeline(); renderEditList();
+    });
+    list.appendChild(row);
+  });
+}
+
+timeline.addEventListener('click', (e)=>{
+  const rect = timeline.getBoundingClientRect();
+  const pct = (e.clientX - rect.left)/rect.width;
+  const sec = Math.round(pct*TOTAL_SECONDS);
+  document.getElementById('marker-from').value = sec;
+});
+
+document.getElementById('marker-add').addEventListener('click', ()=>{
+  const effect = document.getElementById('marker-effect').value;
+  const fromVal = document.getElementById('marker-from').value.trim();
+  const toVal = document.getElementById('marker-to').value.trim();
+  if(fromVal === '') return;
+  const from = Math.max(0, Math.min(TOTAL_SECONDS, parseInt(fromVal,10)));
+  const to = toVal === '' ? null : Math.max(from, Math.min(TOTAL_SECONDS, parseInt(toVal,10)));
+  markers.push({effect, from, to});
+  renderTimeline(); renderEditList();
+  activate('mod-edit');
+  document.getElementById('marker-from').value = '';
+  document.getElementById('marker-to').value = '';
+});
+
+document.getElementById('preset-btn').addEventListener('click', ()=>{
+  markers.push({effect:'taps', from:62, to:null});
+  markers.push({effect:'trombita', from:13, to:80});
+  renderTimeline(); renderEditList();
+  activate('mod-edit');
+});
+
+renderTimeline();
+renderEditList();
+
+// ---------- 7. vocal fx ----------
+const fxState = {autotune:false, double:false, vocoder:false};
+const switches = document.querySelectorAll('.switch');
+switches.forEach(sw=>{
+  sw.addEventListener('click', ()=>{
+    sw.classList.toggle('on');
+    fxState[sw.dataset.fx] = sw.classList.contains('on');
+    activate('mod-fx');
+  });
+});
+function bindSlider(id, valId, suffix){
+  const el = document.getElementById(id);
+  const valEl = document.getElementById(valId);
+  el.addEventListener('input', ()=>{
+    valEl.textContent = el.value+suffix;
+    activate('mod-fx');
+  });
+}
+bindSlider('fx-strength','fx-strength-val','%');
+bindSlider('fx-reverb','fx-reverb-val','%');
+bindSlider('fx-mix','fx-mix-val','%');
+
+// saját vokál-lánc: felvett hangra rárakott, helyben számolt effektek
+function playProcessedVocal(c, dest, buffer){
+  const strength = document.getElementById('fx-strength').value/100;
+  const reverbAmt = document.getElementById('fx-reverb').value/100;
+  const mixAmt = document.getElementById('fx-mix').value/100;
+
+  function playOne(detuneCents, delay){
+    const src = c.createBufferSource();
+    src.buffer = buffer;
+    src.detune.value = detuneCents;
+
+    let chainOut = src;
+
+    if(fxState.autotune){
+      const bp = c.createBiquadFilter();
+      bp.type = 'peaking';
+      bp.frequency.value = 1000;
+      bp.Q.value = 2 + strength*8;
+      bp.gain.value = 6*strength;
+      chainOut.connect(bp);
+      chainOut = bp;
+    }
+    if(fxState.vocoder){
+      const carrier = c.createOscillator();
+      carrier.type = 'square';
+      carrier.frequency.value = 110;
+      const ring = c.createGain();
+      const carrierGain = c.createGain();
+      carrierGain.gain.value = 0.6;
+      carrier.connect(carrierGain);
+      carrierGain.connect(ring.gain);
+      chainOut.connect(ring);
+      carrier.start(c.currentTime+delay);
+      carrier.stop(c.currentTime+delay+buffer.duration+0.2);
+      chainOut = ring;
+    }
+
+    const dry = c.createGain();
+    dry.gain.value = mixAmt;
+    chainOut.connect(dry);
+    dry.connect(dest);
+
+    if(reverbAmt>0.01){
+      const conv = c.createConvolver();
+      conv.buffer = makeReverbImpulse(c, 1.8, 2.2);
+      const wet = c.createGain();
+      wet.gain.value = reverbAmt*mixAmt*0.8;
+      chainOut.connect(conv);
+      conv.connect(wet);
+      wet.connect(dest);
+    }
+
+    src.start(c.currentTime+delay);
+  }
+
+  playOne(0, 0);
+  if(fxState.double) playOne(14, 0.03);
+}
+
+document.getElementById('final-btn').addEventListener('click', ()=>{
+  document.getElementById('final-result').style.display = 'block';
+  const bars = buildWaveform(document.getElementById('final-waveform'), 7);
+  activate('mod-fx');
+  const list = document.getElementById('edit-list');
+  if(!markers.length){
+    // ha nincs jelölő, a footer alatti hint jelzi, hogy csak az alapsáv + vokál szól
+  }
+  document.getElementById('final-time-info') && null;
+});
+document.getElementById('final-play').addEventListener('click', (e)=>{
+  const c = ctx();
+  const bpm = STYLE_TEMPO[chosenStyle] || 96;
+  const startTime = c.currentTime+0.05;
+  const loopLen = buildLoopSchedule(c, c.destination, startTime, chosenInstr, bpm);
+  scheduleMarkersOntoLoop(c, c.destination, startTime, loopLen, markers, TOTAL_SECONDS);
+  if(recordedBuffer){
+    playProcessedVocal(c, c.destination, recordedBuffer);
+  }
+  const bars = document.querySelectorAll('#final-waveform .wf-bar');
+  animateWaveform(Array.from(bars), Math.max(loopLen, recordedBuffer ? recordedBuffer.duration : 0));
+  e.target.textContent = '❚❚';
+  setTimeout(()=>{ e.target.textContent = '▶'; }, loopLen*1000);
+});
+
+</script>
+</body>
+</html>

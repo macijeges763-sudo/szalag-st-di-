@@ -1,0 +1,49 @@
+name: Build Android APK
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Java (Gradle-hez kell)
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Csomagok telepítése
+        run: npm install
+
+      - name: Android platform hozzáadása (Capacitor)
+        run: npx cap add android
+
+      - name: Sync
+        run: npx cap sync android
+
+      - name: Mikrofon engedély beszúrása a Manifestbe
+        run: |
+          sed -i 's#<application#<uses-permission android:name="android.permission.RECORD_AUDIO" />\n    <application#' android/app/src/main/AndroidManifest.xml
+
+      - name: gradlew futtathatóvá tétele
+        run: chmod +x android/gradlew
+
+      - name: Debug APK build
+        run: cd android && ./gradlew assembleDebug
+
+      - name: APK feltöltése letölthető csomagként
+        uses: actions/upload-artifact@v4
+        with:
+          name: szalag-debug-apk
+          path: android/app/build/outputs/apk/debug/app-debug.apk
