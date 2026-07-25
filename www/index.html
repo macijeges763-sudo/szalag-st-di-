@@ -682,6 +682,27 @@ function ctx(){
   return audioCtx;
 }
 
+// KÖZÖS KIMENETI BUSZ — minden hang ide megy, nem közvetlenül a hangkimenetre.
+// Enélkül a sok egyszerre szóló hangforrás (dob+basszus+akkord+taps) összeadva
+// túllépi a maximális szintet, ami recsegésként/torzításként hallatszik.
+// A kompresszor lefogja a csúcsokat, a masterGain pedig ad egy kis tartalékot (headroom).
+let masterBus = null;
+function getMasterBus(c){
+  if(masterBus) return masterBus;
+  const compressor = c.createDynamicsCompressor();
+  compressor.threshold.value = -20;
+  compressor.knee.value = 24;
+  compressor.ratio.value = 10;
+  compressor.attack.value = 0.003;
+  compressor.release.value = 0.2;
+  const makeupGain = c.createGain();
+  makeupGain.gain.value = 0.7; // tartalék, hogy ne csordulhasson túl
+  compressor.connect(makeupGain);
+  makeupGain.connect(c.destination);
+  masterBus = compressor; // innen csatlakoztatunk mindent — a compressor a bemenet
+  return masterBus;
+}
+
 // egy saját, generált "terem" visszhang — nem minta, hanem zajból épített impulzus
 function makeReverbImpulse(c, seconds, decay){
   const rate = c.sampleRate;
@@ -792,7 +813,7 @@ function scheduleKick(c, dest, t){
   o.type = 'sine';
   o.frequency.setValueAtTime(140, t);
   o.frequency.exponentialRampToValueAtTime(45, t+0.12);
-  g.gain.setValueAtTime(0.9, t);
+  g.gain.setValueAtTime(0.7, t);
   g.gain.exponentialRampToValueAtTime(0.001, t+0.22);
   o.connect(g); g.connect(dest);
   o.start(t); o.stop(t+0.25);
@@ -803,7 +824,7 @@ function scheduleHat(c, dest, t, open){
   const hp = c.createBiquadFilter();
   hp.type = 'highpass'; hp.frequency.value = 7000;
   const g = c.createGain();
-  g.gain.setValueAtTime(0.18, t);
+  g.gain.setValueAtTime(0.13, t);
   g.gain.exponentialRampToValueAtTime(0.001, t+(open?0.16:0.045));
   src.connect(hp); hp.connect(g); g.connect(dest);
   src.start(t); src.stop(t+0.2);
@@ -816,7 +837,7 @@ function scheduleClap(c, dest, t){
     const bp = c.createBiquadFilter();
     bp.type = 'bandpass'; bp.frequency.value = 1500; bp.Q.value = 1.1;
     const g = c.createGain();
-    g.gain.setValueAtTime(0.5, t+off);
+    g.gain.setValueAtTime(0.35, t+off);
     g.gain.exponentialRampToValueAtTime(0.001, t+off+0.18);
     src.connect(bp); bp.connect(g); g.connect(dest);
     src.start(t+off); src.stop(t+off+0.2);
@@ -952,7 +973,7 @@ document.getElementById('gen-btn').addEventListener('click', ()=>{
   const bars = buildWaveform(document.getElementById('base-waveform'), 42);
   const c = ctx();
   const bpm = STYLE_TEMPO[chosenStyle] || 96;
-  const loopLen = buildLoopSchedule(c, c.destination, c.currentTime+0.05, chosenInstr, bpm, getSongLength());
+  const loopLen = buildLoopSchedule(c, getMasterBus(c), c.currentTime+0.05, chosenInstr, bpm, getSongLength());
   document.getElementById('base-time').textContent = "0:00 / "+fmt(loopLen);
   animateWaveform(bars, loopLen);
   activate('mod-gen');
@@ -960,7 +981,7 @@ document.getElementById('gen-btn').addEventListener('click', ()=>{
 document.getElementById('base-play').addEventListener('click', (e)=>{
   const c = ctx();
   const bpm = STYLE_TEMPO[chosenStyle] || 96;
-  const loopLen = buildLoopSchedule(c, c.destination, c.currentTime+0.05, chosenInstr, bpm, getSongLength());
+  const loopLen = buildLoopSchedule(c, getMasterBus(c), c.currentTime+0.05, chosenInstr, bpm, getSongLength());
   const bars = document.querySelectorAll('#base-waveform .wf-bar');
   animateWaveform(Array.from(bars), loopLen);
   e.target.textContent = '❚❚';
@@ -1207,10 +1228,10 @@ document.getElementById('final-play').addEventListener('click', (e)=>{
   const c = ctx();
   const bpm = STYLE_TEMPO[chosenStyle] || 96;
   const startTime = c.currentTime+0.05;
-  const loopLen = buildLoopSchedule(c, c.destination, startTime, chosenInstr, bpm, getSongLength());
-  scheduleMarkersOntoLoop(c, c.destination, startTime, loopLen, markers, TOTAL_SECONDS);
+  const loopLen = buildLoopSchedule(c, getMasterBus(c), startTime, chosenInstr, bpm, getSongLength());
+  scheduleMarkersOntoLoop(c, getMasterBus(c), startTime, loopLen, markers, TOTAL_SECONDS);
   if(recordedBuffer){
-    playProcessedVocal(c, c.destination, recordedBuffer);
+    playProcessedVocal(c, getMasterBus(c), recordedBuffer);
   }
   const bars = document.querySelectorAll('#final-waveform .wf-bar');
   animateWaveform(Array.from(bars), Math.max(loopLen, recordedBuffer ? recordedBuffer.duration : 0));
