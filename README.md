@@ -80,18 +80,28 @@ npx cap sync
 
 Ez átmásolja a frissített `www/index.html`-t mindkét natív projektbe.
 
-## 5. Ikon és splash screen
+## 5. Appikon (retro rádió) beállítása
 
-A Capacitor tud automatikusan ikont/splash képet generálni egyetlen
-forrásképből:
+Az `assets/icon.png` fájl már benne van a projektben — ez egy 1024×1024-es,
+saját tervezésű retro rádió ikon (nem AI-kép-generálásból, hanem kézzel
+megrajzolt vektoros formákból). Ebből egyetlen paranccsal legenerálódik
+minden méret, ami Android/iOS-hez kell:
 
 ```bash
 npm install -D @capacitor/assets
 npx capacitor-assets generate
 ```
 
-Ehhez kell egy `assets/icon.png` (1024×1024) és `assets/splash.png`
-(2732×2732) képed — ha akarod, ezeket is meg tudom veled tervezni.
+Ha a Capacitor kérne egy `assets/splash.png`-t is (indítóképernyő) és
+nincs neked ilyen, a fenti parancs az `icon.png`-ből ahhoz is tud
+generálni egy egyszerű, egyszínű hátteret — vagy szólj, ha egyedi
+splash képet is szeretnél hozzá terveztetni.
+
+Utána szinkronizáld a natív projektekbe:
+
+```bash
+npx cap sync
+```
 
 ## 6. Store-feltöltés röviden
 

@@ -29,6 +29,11 @@ jobs:
       - name: Android platform hozzáadása (Capacitor)
         run: npx cap add android
 
+      - name: Appikon generálása (retro rádió) minden méretben
+        run: |
+          npm install -D @capacitor/assets
+          npx capacitor-assets generate --android
+
       - name: Sync
         run: npx cap sync android
 
